@@ -6,10 +6,11 @@ Emulate the functions of the object returned by boto.connect_s3
 """
 import logging
 
-from lumberyard.http_connection import HTTPConnection
+from lumberyard.http_connection import HTTPConnection, HTTPRequestError
 from lumberyard.http_util import compute_uri
 
 from motoboto.config import Config
+from motoboto.bucket import Bucket
 
 class S3Emulator(object):
     """
@@ -33,41 +34,43 @@ class S3Emulator(object):
         method = "GET"
         uri = compute_uri("data", bucket_name, action="create_collection")
 
-        log.info("requesting %s" % (uri, ))
+        self._log.info("requesting %s" % (uri, ))
         try:
             response = self._http_connection.request(method, uri, body=None)
         except HTTPRequestError, instance:
-            log.error(str(instance))
+            self._log.error(str(instance))
             raise
         
-        log.info("reading response")
+        self._log.info("reading response")
         response.read()
+
+        return Bucket(self._http_connection, bucket_name)
 
     def get_all_buckets(self):
         method = "GET"
         uri = compute_uri("list_collections")
 
-        log.info("requesting %s" % (uri, ))
+        self._log.info("requesting %s" % (uri, ))
         try:
             response = self._http_connection.request(method, uri, body=None)
         except HTTPRequestError, instance:
-            log.error(str(instance))
+            self._log.error(str(instance))
             raise
         
-        log.info("reading response")
+        self._log.info("reading response")
         return response.read()
 
-    def delete_bucket(bucket_name):
+    def delete_bucket(self, bucket_name):
         method = "GET"
         uri = compute_uri("data", bucket_name, action="delete_collection")
 
-        log.info("requesting %s" % (uri, ))
+        self._log.info("requesting %s" % (uri, ))
         try:
             response = self._http_connection.request(method, uri, body=None)
         except HTTPRequestError, instance:
-            log.error(str(instance))
+            self._log.error(str(instance))
             raise
         
-        log.info("reading response")
+        self._log.info("reading response")
         response.read()
 
