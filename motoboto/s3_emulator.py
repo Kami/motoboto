@@ -42,9 +42,13 @@ class S3Emulator(object):
             raise
         
         self._log.info("reading response")
-        response.read()
+        cluster_name = response.read()
 
-        return Bucket(self._http_connection, bucket_name)
+        return Bucket(
+            self._http_connection, 
+            bucket_name.decode("utf-8"), 
+            cluster_name.strip()
+        )
 
     def get_all_buckets(self):
         method = "GET"
@@ -58,7 +62,20 @@ class S3Emulator(object):
             raise
         
         self._log.info("reading response")
-        return response.read()
+        data = response.read()
+
+        bucket_list = list()
+        for line in data.split("\n"):
+            if not "," in line: # last line is blank
+                continue
+            (collection_name, cluster_name) = line.split(",")
+            bucket = Bucket(
+                self._http_connection, 
+                collection_name.decode("utf-8"), 
+                cluster_name
+            )
+            bucket_list.append(bucket)
+        return bucket_list
 
     def delete_bucket(self, bucket_name):
         method = "GET"
