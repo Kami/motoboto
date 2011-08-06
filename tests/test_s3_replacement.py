@@ -54,12 +54,60 @@ class TestS3(unittest.TestCase):
         test basic bucket handling
         """
         bucket_name = "com.dougfort.test_bucket"
-        bucket = self._s3_connection.create_bucket(bucket_name)
-        self.assertTrue(bucket is not None)
+
+        # list all buckets, ours shouldn't be there
+        bucket_in_list = False
         bucket_list = self._s3_connection.get_all_buckets()
-        print >> sys.stderr, "buckets", bucket_list
+        print >> sys.stderr, "bucket list"
+        for bucket in bucket_list:
+            print >> sys.stderr, "    ", bucket.name
+            if bucket.name == bucket_name:
+                bucket_in_list = True
+        self.assertFalse(bucket_in_list)
+
+        # create the bucket
+        new_bucket = self._s3_connection.create_bucket(bucket_name)
+        self.assertTrue(new_bucket is not None)
+        self.assertEqual(new_bucket.name, bucket_name)
+        
+        # list all buckets, ours should be there
+        bucket_in_list = False
+        bucket_list = self._s3_connection.get_all_buckets()
+        print >> sys.stderr, "bucket list"
+        for bucket in bucket_list:
+            print >> sys.stderr, "    ", bucket.name
+            if bucket.name == bucket_name:
+                bucket_in_list = True
+        self.assertTrue(bucket_in_list)
+
+        # create a duplicate bucket
+        # s3 accepts this
+        x = self._s3_connection.create_bucket(bucket_name)
+        self.assertEqual(x.name, new_bucket.name)
+
+        # list all buckets, ours should be there
+        bucket_in_list = False
+        bucket_list = self._s3_connection.get_all_buckets()
+        print >> sys.stderr, "bucket list"
+        for bucket in bucket_list:
+            print >> sys.stderr, "    ", bucket.name
+            if bucket.name == bucket_name:
+                bucket_in_list = True
+        self.assertTrue(bucket_in_list)
+
+        # delete the bucket
         self._s3_connection.delete_bucket(bucket_name)
         
+        # list all buckets, ours should be gone
+        bucket_in_list = False
+        bucket_list = self._s3_connection.get_all_buckets()
+        print >> sys.stderr, "bucket list"
+        for bucket in bucket_list:
+            print >> sys.stderr, "    ", bucket.name
+            if bucket.name == bucket_name:
+                bucket_in_list = True
+        self.assertFalse(bucket_in_list)
+
 if __name__ == "__main__":
     _initialize_logging()
     unittest.main()
