@@ -8,13 +8,16 @@ note that you need credentials for both AWS and $NAME
 """
 import logging
 import os
+import random
 import sys
 import unittest
 
 if os.environ.get("USE_MOTOBOTO", "0") == "1":
     import motoboto as boto
+    from motoboto.s3.key import Key
 else:
     import boto
+    from boto.s3.key import Key
 
 def _initialize_logging():
     """initialize the log"""
@@ -26,6 +29,9 @@ def _initialize_logging():
     logging.root.addHandler(console)
 
     logging.root.setLevel(logging.DEBUG)
+
+def _random_string(size):
+    return "".join([chr(random.randint(0, 255)) for _ in xrange(size)])
 
 class TestS3(unittest.TestCase):
     """test S3 functionality"""
@@ -108,6 +114,44 @@ class TestS3(unittest.TestCase):
                 bucket_in_list = True
         self.assertFalse(bucket_in_list)
 
+    def test_key_with_strings(self):
+        """
+        test simple key 'from_string' and 'as_string' functions
+        """
+        bucket_name = "com.dougfort.test_key_with_strings"
+        key_name = u"test key"
+        test_string = _random_string(1024)
+
+        # create the bucket
+        bucket = self._s3_connection.create_bucket(bucket_name)
+        self.assertTrue(bucket is not None)
+        self.assertEqual(bucket.name, bucket_name)
+
+        # create an empty key
+        write_key = Key(bucket)
+
+        # set the name
+        write_key.name = key_name
+        self.assertFalse(write_key.exists())
+
+        # upload some data
+        write_key.set_contents_from_string(test_string)        
+        self.assertTrue(write_key.exists())
+
+        # create another key with the same name 
+        read_key = Key(bucket, key_name)
+
+        # read back the data
+        returned_string = read_key.get_contents_as_string()      
+        self.assertEqual(returned_string, test_string)
+
+        # delete the string
+        read_key.delete()
+        self.assertFalse(write_key.exists())
+        
+        # delete the bucket
+        self._s3_connection.delete_bucket(bucket_name)
+        
 if __name__ == "__main__":
     _initialize_logging()
     unittest.main()

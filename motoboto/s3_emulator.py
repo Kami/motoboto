@@ -10,7 +10,7 @@ from lumberyard.http_connection import HTTPConnection, HTTPRequestError
 from lumberyard.http_util import compute_uri
 
 from motoboto.config import Config
-from motoboto.bucket import Bucket
+from motoboto.s3.bucket import Bucket
 
 class S3Emulator(object):
     """
