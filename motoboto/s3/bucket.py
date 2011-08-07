@@ -20,4 +20,7 @@ class Bucket(object):
     def name(self):
         return self._collection_name
 
-    
+    @property
+    def http_connection(self):
+        return self._http_connection
+

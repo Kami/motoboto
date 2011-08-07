@@ -12,7 +12,7 @@ _version = "0.0.0"
 _author = "Doug Fort"
 _author_email = "dougfort@spideroak.com"
 _url = "https://spideroak.com"
-_packages = ["motoboto", ]
+_packages = ["motoboto", "motoboto.s3", ]
 _classifiers = [
     "Development Status :: 1 - Planning",
     "Intended Audience :: Developers",
