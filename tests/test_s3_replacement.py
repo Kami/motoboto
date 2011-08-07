@@ -55,7 +55,7 @@ class TestS3(unittest.TestCase):
                 pass
             self._s3_connection = None
 
-    def test_bucket(self):
+    def xxxtest_bucket(self):
         """
         test basic bucket handling
         """
@@ -134,20 +134,20 @@ class TestS3(unittest.TestCase):
         write_key.name = key_name
         self.assertFalse(write_key.exists())
 
-#        # upload some data
-#        write_key.set_contents_from_string(test_string)        
-#        self.assertTrue(write_key.exists())
-#
-#        # create another key with the same name 
-#        read_key = Key(bucket, key_name)
-#
-#        # read back the data
-#        returned_string = read_key.get_contents_as_string()      
-#        self.assertEqual(returned_string, test_string)
-#
-#        # delete the string
-#        read_key.delete()
-#        self.assertFalse(write_key.exists())
+        # upload some data
+        write_key.set_contents_from_string(test_string)        
+        self.assertTrue(write_key.exists())
+
+        # create another key with the same name 
+        read_key = Key(bucket, key_name)
+
+        # read back the data
+        returned_string = read_key.get_contents_as_string()      
+        self.assertEqual(returned_string, test_string)
+
+        # delete the string
+        read_key.delete()
+        self.assertFalse(write_key.exists())
         
         # delete the bucket
         self._s3_connection.delete_bucket(bucket_name)
