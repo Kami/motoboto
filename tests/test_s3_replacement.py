@@ -6,9 +6,12 @@ test that motoboto can replace boto for s3 functions
 
 note that you need credentials for both AWS and $NAME
 """
+import filecmp
 import logging
 import os
+import os.path
 import random
+import shutil
 import sys
 import unittest
 
@@ -18,6 +21,9 @@ if os.environ.get("USE_MOTOBOTO", "0") == "1":
 else:
     import boto
     from boto.s3.key import Key
+
+_tmp_path = os.environ.get("TEMP", "/tmp")
+_test_dir_path = os.path.join(_tmp_path, "test_s3_replacement")
 
 def _initialize_logging():
     """initialize the log"""
@@ -38,7 +44,9 @@ class TestS3(unittest.TestCase):
 
     def setUp(self):
         log = logging.getLogger("setUp")
-        self.tearDown()        
+        self.tearDown()  
+        log.debug("creating %s" % (_test_dir_path))
+        os.makedirs(_test_dir_path)
         log.debug("opening s3 connection")
         self._s3_connection = boto.connect_s3()
 
@@ -54,6 +62,9 @@ class TestS3(unittest.TestCase):
                 # open http connections
                 pass
             self._s3_connection = None
+
+        if os.path.exists(_test_dir_path):
+            shutil.rmtree(_test_dir_path)
 
     def xxxtest_bucket(self):
         """
@@ -114,7 +125,7 @@ class TestS3(unittest.TestCase):
                 bucket_in_list = True
         self.assertFalse(bucket_in_list)
 
-    def test_key_with_strings(self):
+    def xxxtest_key_with_strings(self):
         """
         test simple key 'from_string' and 'as_string' functions
         """
@@ -145,7 +156,66 @@ class TestS3(unittest.TestCase):
         returned_string = read_key.get_contents_as_string()      
         self.assertEqual(returned_string, test_string)
 
-        # delete the string
+        # delete the key
+        read_key.delete()
+        self.assertFalse(write_key.exists())
+        
+        # delete the bucket
+        self._s3_connection.delete_bucket(bucket_name)
+        
+    def test_key_with_files(self):
+        """
+        test simple key 'from_file' and 'to_file' functions
+        """
+        log = logging.getLogger("test_key_with_files")
+        bucket_name = "com.dougfort.test_key_with_files"
+        key_name = "A" * 1024
+        test_file_path = os.path.join(
+            _test_dir_path, "test_key_with_files-orignal"
+        )
+        test_file_size = 1024 ^2
+        buffer_size = 1024
+
+        log.debug("writing %s bytes to %s" % (
+            test_file_size, test_file_path, 
+        ))
+        bytes_written = 0
+        with open(test_file_path, "w") as output_file:
+            while bytes_written < test_file_size:
+                output_file.write(_random_string(buffer_size))
+                bytes_written += buffer_size
+
+        # create the bucket
+        bucket = self._s3_connection.create_bucket(bucket_name)
+        self.assertTrue(bucket is not None)
+        self.assertEqual(bucket.name, bucket_name)
+
+        # create an empty key
+        write_key = Key(bucket)
+
+        # set the name
+        write_key.name = key_name
+        self.assertFalse(write_key.exists())
+
+        # upload some data
+        with open(test_file_path, "r") as archive_file:
+            write_key.set_contents_from_file(archive_file)        
+        self.assertTrue(write_key.exists())
+
+        # create another key with the same name 
+        read_key = Key(bucket, key_name)
+
+        # read back the data
+        retrieve_file_path = os.path.join(
+            _test_dir_path, "test_key_with_files-orignal"
+        )
+        with open(retrieve_file_path, "w") as retrieve_file:
+            read_key.get_contents_to_file(retrieve_file)      
+        self.assertTrue(
+            filecmp.cmp(test_file_path, retrieve_file_path, shallow=False)
+        )
+
+        # delete the key
         read_key.delete()
         self.assertFalse(write_key.exists())
         
