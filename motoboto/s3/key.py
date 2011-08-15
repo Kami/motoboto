@@ -5,7 +5,6 @@ key.py
 simulate a boto Key object
 """
 import logging
-import os
 
 from lumberyard.http_connection import HTTPRequestError
 from lumberyard.http_util import compute_uri
@@ -25,6 +24,7 @@ class Key(object):
         self._log = logging.getLogger("Key")
         self._bucket = bucket
         self._name = name
+        self._size = None
 
     def close(self):
         self._log.debug("closing")
@@ -38,14 +38,34 @@ class Key(object):
 
     name = property(_get_name, _set_name)
 
+    def _get_size(self):
+        """key size."""
+        return self._size
+
+    def _set_size(self, value):
+        self._size = value
+
+    size = property(_get_size, _set_size)
+
     def exists(self):
         """
         return True if we can stat the key
         """  
         found = False
         method = "GET"
-        uri = compute_uri("data", self._name, action="stat")
 
+        if self._bucket is None:
+            raise ValueError("No bucket")
+        if self._name is None:
+            raise ValueError("No name")
+
+        uri = compute_uri(
+            "data", 
+            self._name, 
+            action="stat", 
+            collection_name=self._bucket.name
+        )
+        
         self._log.info("requesting %s" % (uri, ))
         try:
             response = self._bucket.http_connection.request(
@@ -72,6 +92,11 @@ class Key(object):
         """
         store the content of the string in the lumberyard
         """
+        if self._bucket is None:
+            raise ValueError("No bucket")
+        if self._name is None:
+            raise ValueError("No name")
+
         # 2011-08-07 dougfort -- If they don't want to replace,
         # stop them right here.
         if not replace:
@@ -79,7 +104,9 @@ class Key(object):
                 raise KeyError("attempt to replace key %r" % (self._name))
 
         method = "POST"
-        uri = compute_uri("data", self._name)
+        uri = compute_uri(
+            "data", self._name, collection_name=self._bucket.name
+        )
 
         self._log.info("posting %s" % (uri, ))
         response = self._bucket.http_connection.request(
@@ -95,6 +122,11 @@ class Key(object):
         """
         store the content of the file in lumberyard
         """
+        if self._bucket is None:
+            raise ValueError("No bucket")
+        if self._name is None:
+            raise ValueError("No name")
+
         # 2011-08-07 dougfort -- If they don't want to replace,
         # stop them right here.
         if not replace:
@@ -109,7 +141,9 @@ class Key(object):
             wrapper = ArchiveCallbackWrapper(body, cb, cb_count) 
 
         method = "POST"
-        uri = compute_uri("data", self._name)
+        uri = compute_uri(
+            "data", self._name, collection_name=self._bucket.name
+        )
 
         self._log.info("posting %s" % (uri, ))
         response = self._bucket.http_connection.request(method, uri, body=body)
@@ -121,8 +155,15 @@ class Key(object):
         """
         return the contents from lumberyard as a string
         """
+        if self._bucket is None:
+            raise ValueError("No bucket")
+        if self._name is None:
+            raise ValueError("No name")
+
         method = "GET"
-        uri = compute_uri("data", self._name)
+        uri = compute_uri(
+            "data", self._name, collection_name=self._bucket.name
+        )
 
         self._log.info("requesting %s" % (uri, ))
         response = self._bucket.http_connection.request(
@@ -143,8 +184,15 @@ class Key(object):
         """
         return the contents from lumberyard to a file
         """
+        if self._bucket is None:
+            raise ValueError("No bucket")
+        if self._name is None:
+            raise ValueError("No name")
+
         method = "GET"
-        uri = compute_uri("data", self._name)
+        uri = compute_uri(
+            "data", self._name, collection_name=self._bucket.name
+        )
 
         self._log.info("requesting %s" % (uri, ))
         response = self._bucket.http_connection.request(
@@ -171,8 +219,15 @@ class Key(object):
         """
         delete this key from the system
         """
+        if self._bucket is None:
+            raise ValueError("No bucket")
+        if self._name is None:
+            raise ValueError("No name")
+
         method = "DELETE"
-        uri = compute_uri("data", self._name)
+        uri = compute_uri(
+            "data", self._name, collection_name=self._bucket.name
+        )
 
         self._log.info("requesting delete %s" % (uri, ))
         response = self._bucket.http_connection.request(

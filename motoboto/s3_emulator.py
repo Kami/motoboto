@@ -32,7 +32,7 @@ class S3Emulator(object):
 
     def create_bucket(self, bucket_name):
         method = "GET"
-        uri = compute_uri("data", bucket_name, action="create_collection")
+        uri = compute_uri("create_collection", collection_name=bucket_name)
 
         self._log.info("requesting %s" % (uri, ))
         try:
@@ -79,7 +79,7 @@ class S3Emulator(object):
 
     def delete_bucket(self, bucket_name):
         method = "GET"
-        uri = compute_uri("data", bucket_name, action="delete_collection")
+        uri = compute_uri("delete_collection", collection_name=bucket_name)
 
         self._log.info("requesting %s" % (uri, ))
         try:
