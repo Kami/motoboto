@@ -6,6 +6,8 @@ simulate a boto Bucket object
 """
 import logging
 
+from motoboto.s3.key import Key
+
 class Bucket(object):
     """
     simulate a boto Bucket object
@@ -24,3 +26,7 @@ class Bucket(object):
     def http_connection(self):
         return self._http_connection
 
+    def get_key(self, name):
+        """return a key object for the name"""
+        return Key(bucket=self, name=name)
+        
