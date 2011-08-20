@@ -108,7 +108,7 @@ class Key(object):
         kwargs = {
             "collection_name" : self._bucket.name,
         }
-        for meta_key, meta_value in self._metadata:
+        for meta_key, meta_value in self._metadata.items():
             kwargs["".join([meta_prefix, meta_key])] = meta_value
 
         method = "POST"

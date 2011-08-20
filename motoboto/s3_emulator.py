@@ -4,6 +4,7 @@ s3_emulator.py
 
 Emulate the functions of the object returned by boto.connect_s3
 """
+import json
 import logging
 
 from lumberyard.http_connection import HTTPConnection, HTTPRequestError
@@ -63,12 +64,10 @@ class S3Emulator(object):
         
         self._log.info("reading response")
         data = response.read()
+        collection_list = json.loads(data)
 
         bucket_list = list()
-        for line in data.split("\n"):
-            if not "," in line: # last line is blank
-                continue
-            (collection_name, cluster_name) = line.split(",")
+        for collection_name, cluster_name in collection_list:
             bucket = Bucket(
                 self._http_connection, 
                 collection_name.decode("utf-8"), 
