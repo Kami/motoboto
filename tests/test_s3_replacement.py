@@ -12,6 +12,7 @@ import os
 import os.path
 import random
 import shutil
+from cStringIO import StringIO
 import sys
 import unittest
 
@@ -338,6 +339,68 @@ class TestS3(unittest.TestCase):
         # delete the key
         read_key.delete()
         self.assertFalse(write_key.exists())
+        
+        # delete the bucket
+        self._s3_connection.delete_bucket(bucket_name)
+        
+    def test_simple_multipart(self):
+        """
+        test a simple multipart upload
+        """
+        log = logging.getLogger("test_simple_multipart")
+        bucket_name = "com.dougfort.test_simple_multipart"
+        key_name = "test_key"
+        test_file_path = os.path.join(
+            _test_dir_path, "test_simple_multipart-orignal"
+        )
+        part_count = 2
+        # 5mb is the minimum size s3 will take 
+        test_file_size = 1024 ** 2 * 5 * part_count
+        buffer_size = 1024
+
+        log.debug("writing %s bytes to %s" % (
+            test_file_size, test_file_path, 
+        ))
+        bytes_written = 0
+        with open(test_file_path, "w") as output_file:
+            while bytes_written < test_file_size:
+                output_file.write(_random_string(buffer_size))
+                bytes_written += buffer_size
+
+        # create the bucket
+        bucket = self._s3_connection.create_bucket(bucket_name)
+        self.assertTrue(bucket is not None)
+        self.assertEqual(bucket.name, bucket_name)
+
+        # assert that we have no uploads in progress
+        upload_list = bucket.get_all_multipart_uploads()
+        self.assertEqual(len(upload_list), 0)
+
+        # start the multipart upload
+        multipart_upload = bucket.initiate_multipart_upload(key_name)
+
+        # assert that our upload is in progress
+        upload_list = bucket.get_all_multipart_uploads()
+        self.assertEqual(len(upload_list), 1)
+        self.assertEqual(upload_list[0].id, multipart_upload.id)
+
+        # upload a file in pieces
+        current_pos = 0
+        part_size = int(test_file_size / part_count)
+        for index in range(part_count):
+            with open(test_file_path, "r") as input_file:
+                input_file.seek(current_pos)
+                data = input_file.read(part_size)
+            upload_file = StringIO(data)
+            multipart_upload.upload_part_from_file(upload_file, index+1)
+
+        # complete the upload
+        completed_upload = multipart_upload.complete_upload()
+        print >> sys.stderr, dir(completed_upload)
+
+        # delete the key
+        key = Key(bucket, key_name)
+        key.delete()
         
         # delete the bucket
         self._s3_connection.delete_bucket(bucket_name)
