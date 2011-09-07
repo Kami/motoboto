@@ -9,7 +9,6 @@ import os.path
 
 #TODO: locate the config in the proper place for the platform
 _config_path = os.path.expandvars("$HOME/.motoboto")
-_base_address_env = "MOTOBOTO_BASE_ADDRESS"
 _user_name_env = "MOTOBOTO_USER_NAME"
 _auth_key_id_env = "MOTOBOTO_AUTH_KEY_ID"
 _auth_key_env = "MOTOBOTO_AUTH_KEY"
@@ -19,7 +18,6 @@ class Config(object):
     configuration information for motoboto
     """
     def __init__(self):
-        self.base_address = None
         self.user_name = None
         self.auth_key_id = None
         self.auth_key = None        
@@ -28,8 +26,6 @@ class Config(object):
             self._load_config()
 
         # environment variables override config file
-        if _base_address_env in os.environ:
-            self.base_address = os.environ[_base_address_env]
         if _user_name_env in os.environ:
             self.user_name = os.environ[_user_name_env]
         if _auth_key_id_env in os.environ:
@@ -37,7 +33,6 @@ class Config(object):
         if _auth_key_env in os.environ:
             self.auth_key = os.environ[_auth_key_env]
 
-        assert self.base_address is not None
         assert self.user_name is not None
         assert self.auth_key_id is not None
         assert self.auth_key is not None
@@ -45,9 +40,7 @@ class Config(object):
     def _load_config(self):
         for line in open(_config_path):
             key, value = line.split()
-            if key.lower() in ["base_address", "baseaddress"]:
-                self.base_address = value
-            elif key.lower() in ["user_name", "username"]:
+            if key.lower() in ["user_name", "username"]:
                 self.user_name = value
             elif key.lower() in ["auth_key_id", "authkeyid"]:
                 self.auth_key_id = value

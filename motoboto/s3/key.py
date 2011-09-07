@@ -54,6 +54,7 @@ class Key(object):
         return True if we can stat the key
         """  
         found = False
+
         method = "GET"
 
         if self._bucket is None:
@@ -63,28 +64,29 @@ class Key(object):
 
         kwargs = {
             "action"            : "stat", 
-            "collection_name"   : self._bucket.name
         }
 
         uri = compute_uri("data", self._name, **kwargs)
         
+        http_connection = self._bucket.create_http_connection()
+
         self._log.info("requesting %s" % (uri, ))
         try:
-            response = self._bucket.http_connection.request(
-                method, uri, body=None
-            )
+            response = http_connection.request(method, uri, body=None)
         except HTTPRequestError, instance:
             if instance.status == 404: # not found
                 pass
             else:
                 self._log.error(str(instance))
+                http_connection.close()
                 raise
         else:
             found = True
         
         if found:
-            self._log.info("reading response")
             response.read()
+            
+        http_connection.close()
 
         return found
 
@@ -105,22 +107,21 @@ class Key(object):
             if self.exists():
                 raise KeyError("attempt to replace key %r" % (self._name))
 
-        kwargs = {
-            "collection_name" : self._bucket.name,
-        }
+        kwargs = {}
         for meta_key, meta_value in self._metadata.items():
             kwargs["".join([meta_prefix, meta_key])] = meta_value
 
         method = "POST"
         uri = compute_uri("data", self._name, **kwargs)
 
+        http_connection = self._bucket.create_http_connection()
+
         self._log.info("posting %s" % (uri, ))
-        response = self._bucket.http_connection.request(
-            method, uri, body=data
-        )
+        response = http_connection.request(method, uri, body=data)
         
-        self._log.info("reading response")
         response.read()
+
+        http_connection.close()
 
     def set_contents_from_file(
         self, file_object, replace=True, cb=None, cb_count=10
@@ -146,19 +147,18 @@ class Key(object):
             body = ReadReporter(file_object)
             wrapper = ArchiveCallbackWrapper(body, cb, cb_count) 
 
-        kwargs = {
-            "collection_name" : self._bucket.name,
-        }
+        kwargs = {}
         for meta_key, meta_value in self._metadata:
             kwargs["".join([meta_prefix, meta_key])] = meta_value
 
         method = "POST"
         uri = compute_uri("data", self._name, **kwargs)
 
+        http_connection = self._bucket.create_http_connection()
+
         self._log.info("posting %s" % (uri, ))
-        response = self._bucket.http_connection.request(method, uri, body=body)
+        response = http_connection.request(method, uri, body=body)
         
-        self._log.info("reading response")
         response.read()
 
     def get_contents_as_string(self, cb=None, cb_count=10):
@@ -171,22 +171,21 @@ class Key(object):
             raise ValueError("No name")
 
         method = "GET"
-        uri = compute_uri(
-            "data", self._name, collection_name=self._bucket.name
-        )
+        uri = compute_uri("data", self._name)
+
+        http_connection = self._bucket.create_http_connection()
 
         self._log.info("requesting %s" % (uri, ))
-        response = self._bucket.http_connection.request(
-            method, uri, body=None
-        )
+        response = http_connection.request(method, uri, body=None)
         
-        self._log.info("reading response")
         body_list = list()
         while True:
             data = response.read(_read_buffer_size)
             if len(data) == 0:
                 break
             body_list.append(data)
+
+        http_connection.close()
 
         return "".join(body_list)
 
@@ -200,14 +199,12 @@ class Key(object):
             raise ValueError("No name")
 
         method = "GET"
-        uri = compute_uri(
-            "data", self._name, collection_name=self._bucket.name
-        )
+        uri = compute_uri("data", self._name)
+
+        http_connection = self._bucket.create_http_connection()
 
         self._log.info("requesting %s" % (uri, ))
-        response = self._bucket.http_connection.request(
-            method, uri, body=None
-        )
+        response = http_connection.request(method, uri, body=None)
 
         if cb is None:
             reporter = NullCallbackWrapper()
@@ -224,6 +221,7 @@ class Key(object):
             file_object.write(data)
             reporter.bytes_written(bytes_read)
         reporter.finish()
+        http_connection.close()
 
     def delete(self):
         """
@@ -235,17 +233,15 @@ class Key(object):
             raise ValueError("No name")
 
         method = "DELETE"
-        uri = compute_uri(
-            "data", self._name, collection_name=self._bucket.name
-        )
+        uri = compute_uri("data", self._name)
+
+        http_connection = self._bucket.create_http_connection()
 
         self._log.info("requesting delete %s" % (uri, ))
-        response = self._bucket.http_connection.request(
-            method, uri, body=None
-        )
+        response = http_connection.request(method, uri, body=None)
         
-        self._log.info("reading response")
         response.read()
+        http_connection.close()
 
     def set_metadata(self, meta_key, meta_value):
         self._metadata[meta_key] = meta_value
@@ -267,9 +263,10 @@ class Key(object):
         if self._name is None:
             raise ValueError("No name")
 
+        http_connection = self._bucket.create_http_connection()
+
         kwargs = {
             "action"            : "get_meta", 
-            "collection_name"   : self._bucket.name,
             "meta_key"          : meta_key,            
         }
 
@@ -277,23 +274,23 @@ class Key(object):
         
         self._log.info("requesting %s" % (uri, ))
         try:
-            response = self._bucket.http_connection.request(
-                method, uri, body=None
-            )
+            response = http_connection.request(method, uri, body=None)
         except HTTPRequestError, instance:
             if instance.status == 404: # not found
                 pass
             else:
                 self._log.error(str(instance))
+                http_connection.close()
                 raise
         else:
             found = True
         
         if not found:
+            http_connection.close()
             raise KeyError(meta_key)
 
-        self._log.info("reading response")
         self._metadata[meta_key] = response.read()
 
+        http_connection.close()
         return self._metadata[meta_key] 
 
