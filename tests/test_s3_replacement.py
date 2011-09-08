@@ -236,7 +236,7 @@ class TestS3(unittest.TestCase):
                     str(total_bytes)
 
         log = logging.getLogger("test_key_with_files")
-        bucket_name = "com-dougfort-test-key-with-files"
+        bucket_name = "com-dougfort-test-key-with-files-and-callback"
         key_name = "A" * 1024
         test_file_path = os.path.join(
             _test_dir_path, "test_key_with_files-orignal"
