@@ -39,6 +39,11 @@ class Config(object):
 
     def _load_config(self):
         for line in open(_config_path):
+            line = line.strip()
+            if len(line) == 0:
+                continue
+            if line[0] == "#":
+                continue
             key, value = line.split()
             if key.lower() in ["user_name", "username"]:
                 self.user_name = value
