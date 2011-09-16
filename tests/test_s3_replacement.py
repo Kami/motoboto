@@ -131,7 +131,7 @@ class TestS3(unittest.TestCase):
         test simple key 'from_string' and 'as_string' functions
         """
         bucket_name = "com-dougfort-test-key-with-strings"
-        key_name = u"test key"
+        key_name = u"test-key"
         test_string = _random_string(1024)
 
         # create the bucket
@@ -301,7 +301,7 @@ class TestS3(unittest.TestCase):
         test simple key with metadata added
         """
         bucket_name = "com-dougfort-test-key-with-meta"
-        key_name = u"test key"
+        key_name = u"test-key"
         test_string = _random_string(1024)
         meta_key = u"meta_key"
         meta_value = "pork"
