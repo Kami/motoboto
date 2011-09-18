@@ -11,16 +11,31 @@ from lumberyard.http_connection import HTTPRequestError
 from lumberyard.http_util import compute_default_collection_name, \
         compute_uri
 
-from motoboto.config import Config
+from motoboto.config import load_config_from_environment, load_config_from_file
 from motoboto.s3.bucket import Bucket
 
 class S3Emulator(object):
     """
     Emulate the functions of the object returned by boto.connect_s3
     """
-    def __init__(self):
+    def __init__(self, config=None):
         self._log = logging.getLogger("S3Emulator")
-        self._config = Config()
+
+        if config is not None:
+            self._config = config
+        else:
+            config = load_config_from_environment()
+            if config is not None:
+                self._config = config
+            else:
+                config = load_config_from_file()
+                if config is not None:
+                    self._config = config
+                else:
+                    raise ValueError(
+                        "You must specify config in environment of file"
+                    )
+
         self._default_bucket = Bucket(
             self._config, 
             compute_default_collection_name(self._config.user_name)
