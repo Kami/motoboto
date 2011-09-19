@@ -4,9 +4,10 @@ bucket.py
 
 simulate a boto Bucket object
 """
+import json
 import logging
 
-from lumberyard.http_util import compute_hostname
+from lumberyard.http_util import compute_hostname, compute_uri
 from lumberyard.http_connection import HTTPConnection
 
 from motoboto.s3.key import Key
@@ -23,6 +24,23 @@ class Bucket(object):
     @property
     def name(self):
         return self._collection_name
+
+    def get_all_keys(self):
+        """return a list of all keys in this bucket"""
+        http_connection = self.create_http_connection()
+        kwargs = {
+            "action"    : "listmatch",
+        }
+
+        method = "GET"
+        uri = compute_uri("data", "", **kwargs)
+
+        response = http_connection.request(method, uri)
+        
+        data = response.read()
+        http_connection.close()
+        data_list = json.loads(data)
+        return [Key(bucket=self, name=n) for (n, _t) in  data_list]
     
     def get_key(self, name):
         """return a key object for the name"""
