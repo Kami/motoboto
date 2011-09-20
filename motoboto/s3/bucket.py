@@ -40,7 +40,7 @@ class Bucket(object):
         data = response.read()
         http_connection.close()
         data_list = json.loads(data)
-        return [Key(bucket=self, name=n) for (n, _t) in  data_list]
+        return [Key(bucket=self, name=n) for n in data_list]
     
     def get_key(self, name):
         """return a key object for the name"""
