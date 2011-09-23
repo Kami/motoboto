@@ -7,7 +7,7 @@ simulate a boto Bucket object
 import json
 import logging
 
-from lumberyard.http_util import compute_hostname, compute_uri
+from lumberyard.http_util import compute_collection_hostname, compute_uri
 from lumberyard.http_connection import HTTPConnection
 
 from motoboto.s3.key import Key
@@ -27,13 +27,11 @@ class Bucket(object):
 
     def get_all_keys(self):
         """return a list of all keys in this bucket"""
-        http_connection = self.create_http_connection()
-        kwargs = {
-            "action"    : "listmatch",
-        }
-
         method = "GET"
-        uri = compute_uri("data", "", **kwargs)
+
+        http_connection = self.create_http_connection()
+
+        uri = compute_uri("data/")
 
         response = http_connection.request(method, uri)
         
@@ -51,7 +49,7 @@ class Bucket(object):
         create an HTTP connection with our name as the host
         """
         return HTTPConnection(
-            compute_hostname(self._collection_name),
+            compute_collection_hostname(self._collection_name),
             self._config.user_name,
             self._config.auth_key,
             self._config.auth_key_id

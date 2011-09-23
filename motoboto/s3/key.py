@@ -51,26 +51,21 @@ class Key(object):
 
     def exists(self):
         """
-        return True if we can stat the key
+        return True if we can HEAD the key
         """  
         found = False
-
-        method = "GET"
 
         if self._bucket is None:
             raise ValueError("No bucket")
         if self._name is None:
             raise ValueError("No name")
 
-        kwargs = {
-            "action"            : "stat", 
-        }
-
-        uri = compute_uri("data", self._name, **kwargs)
+        method = "HEAD"
+        uri = compute_uri("data", self._name)
         
         http_connection = self._bucket.create_http_connection()
 
-        self._log.info("requesting %s" % (uri, ))
+        self._log.info("requesting HEAD %s" % (uri, ))
         try:
             response = http_connection.request(method, uri, body=None)
         except HTTPRequestError, instance:
@@ -156,7 +151,7 @@ class Key(object):
 
         http_connection = self._bucket.create_http_connection()
 
-        self._log.info("posting %s" % (uri, ))
+        self._log.info("requesting POST %s" % (uri, ))
         response = http_connection.request(method, uri, body=body)
         
         response.read()
@@ -175,7 +170,7 @@ class Key(object):
 
         http_connection = self._bucket.create_http_connection()
 
-        self._log.info("requesting %s" % (uri, ))
+        self._log.info("requesting GET %s" % (uri, ))
         response = http_connection.request(method, uri, body=None)
         
         body_list = list()
@@ -203,7 +198,7 @@ class Key(object):
 
         http_connection = self._bucket.create_http_connection()
 
-        self._log.info("requesting %s" % (uri, ))
+        self._log.info("requesting GET %s" % (uri, ))
         response = http_connection.request(method, uri, body=None)
 
         if cb is None:
@@ -237,7 +232,7 @@ class Key(object):
 
         http_connection = self._bucket.create_http_connection()
 
-        self._log.info("requesting delete %s" % (uri, ))
+        self._log.info("requesting DELETE %s" % (uri, ))
         response = http_connection.request(method, uri, body=None)
         
         response.read()
@@ -272,7 +267,7 @@ class Key(object):
 
         uri = compute_uri("data", self._name, **kwargs)
         
-        self._log.info("requesting %s" % (uri, ))
+        self._log.info("requesting GET %s" % (uri, ))
         try:
             response = http_connection.request(method, uri, body=None)
         except HTTPRequestError, instance:

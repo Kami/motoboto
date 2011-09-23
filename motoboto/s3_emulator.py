@@ -7,8 +7,9 @@ Emulate the functions of the object returned by boto.connect_s3
 import json
 import logging
 
-from lumberyard.http_connection import HTTPRequestError
-from lumberyard.http_util import compute_default_collection_name, \
+from lumberyard.http_connection import HTTPConnection, HTTPRequestError
+from lumberyard.http_util import compute_default_hostname, \
+        compute_default_collection_name, \
         compute_uri
 
 from motoboto.config import load_config_from_environment, load_config_from_file
@@ -45,10 +46,19 @@ class S3Emulator(object):
         self._log.debug("closing")
 
     def create_bucket(self, bucket_name):
-        method = "GET"
-        uri = compute_uri("create_collection", collection_name=bucket_name)
+        method = "POST"
 
-        http_connection = self._default_bucket.create_http_connection()
+        http_connection = HTTPConnection(
+            compute_default_hostname(),
+            self._config.user_name,
+            self._config.auth_key,
+            self._config.auth_key_id
+        )
+        uri = compute_uri(
+            "/".join(["customers", self._config.user_name, "collections"]), 
+            action="create",
+            name=bucket_name
+        )
 
         self._log.info("requesting %s" % (uri, ))
         try:
@@ -65,9 +75,16 @@ class S3Emulator(object):
 
     def get_all_buckets(self):
         method = "GET"
-        uri = compute_uri("list_collections")
 
-        http_connection = self._default_bucket.create_http_connection()
+        http_connection = HTTPConnection(
+            compute_default_hostname(),
+            self._config.user_name,
+            self._config.auth_key,
+            self._config.auth_key_id
+        )
+        uri = compute_uri(
+            "/".join(["customers", self._config.user_name, "collections"]), 
+        )
 
         self._log.info("requesting %s" % (uri, ))
         try:
@@ -89,10 +106,25 @@ class S3Emulator(object):
         return bucket_list
 
     def delete_bucket(self, bucket_name):
-        method = "GET"
-        uri = compute_uri("delete_collection", collection_name=bucket_name)
+        method = "DELETE"
 
-        http_connection = self._default_bucket.create_http_connection()
+        http_connection = HTTPConnection(
+            compute_default_hostname(),
+            self._config.user_name,
+            self._config.auth_key,
+            self._config.auth_key_id
+        )
+
+        if bucket_name.startswith("/"):
+            bucket_name = bucket_name[1:]
+        uri = compute_uri(
+            "/".join([
+                "customers", 
+                self._config.user_name, 
+                "collections",
+                bucket_name
+            ]), 
+        )
 
         self._log.info("requesting %s" % (uri, ))
         try:
