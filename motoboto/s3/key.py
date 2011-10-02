@@ -6,7 +6,7 @@ simulate a boto Key object
 """
 import logging
 
-from lumberyard.http_connection import HTTPRequestError
+from lumberyard.http_connection import LumberyardHTTPError
 from lumberyard.http_util import compute_uri, meta_prefix
 from lumberyard.read_reporter import ReadReporter
 
@@ -68,7 +68,7 @@ class Key(object):
         self._log.info("requesting HEAD %s" % (uri, ))
         try:
             response = http_connection.request(method, uri, body=None)
-        except HTTPRequestError, instance:
+        except LumberyardHTTPError, instance:
             if instance.status == 404: # not found
                 pass
             else:
@@ -270,7 +270,7 @@ class Key(object):
         self._log.info("requesting GET %s" % (uri, ))
         try:
             response = http_connection.request(method, uri, body=None)
-        except HTTPRequestError, instance:
+        except LumberyardHTTPError, instance:
             if instance.status == 404: # not found
                 pass
             else:

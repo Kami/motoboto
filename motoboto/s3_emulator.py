@@ -7,7 +7,7 @@ Emulate the functions of the object returned by boto.connect_s3
 import json
 import logging
 
-from lumberyard.http_connection import HTTPConnection, HTTPRequestError
+from lumberyard.http_connection import HTTPConnection, LumberyardHTTPError
 from lumberyard.http_util import compute_default_hostname, \
         compute_default_collection_name, \
         compute_uri
@@ -63,7 +63,7 @@ class S3Emulator(object):
         self._log.info("requesting %s" % (uri, ))
         try:
             response = http_connection.request(method, uri, body=None)
-        except HTTPRequestError, instance:
+        except LumberyardHTTPError, instance:
             self._log.error(str(instance))
             http_connection.close()
             raise
@@ -89,7 +89,7 @@ class S3Emulator(object):
         self._log.info("requesting %s" % (uri, ))
         try:
             response = http_connection.request(method, uri, body=None)
-        except HTTPRequestError, instance:
+        except LumberyardHTTPError, instance:
             self._log.error(str(instance))
             http_connection.close()
             raise
@@ -129,7 +129,7 @@ class S3Emulator(object):
         self._log.info("requesting %s" % (uri, ))
         try:
             response = http_connection.request(method, uri, body=None)
-        except HTTPRequestError, instance:
+        except LumberyardHTTPError, instance:
             self._log.error(str(instance))
             http_connection.close()
             raise
